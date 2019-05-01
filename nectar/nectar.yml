@@ -1,0 +1,16 @@
+- hosts: localhost
+  vars_files:
+          - host_vars/nectar.yml
+  gather_facts: true
+  roles:
+        - role: openstack-common
+        - role: openstack-volume
+        - role: openstack-security-group
+        - role: openstack-instance
+  tasks:
+        - name: Update host file
+          become: yes
+          lineinfile:
+                  path: /etc/ansible/hosts
+                  line: "[servers123]\nubuntu@{{ os_instance1.openstack.public_v4  }}\nubuntu@{{ os_instance2.openstack.public_v4  }}\nubuntu@{{ os_instance3.openstack.public_v4  }}\n[server4]\nubuntu@{{ os_instance4.openstack.public_v4  }}\n"
+                  state: present

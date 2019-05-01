@@ -1,0 +1,27 @@
+#Create Security Group
+- name: Create security group
+  os_security_group:
+          name: "{{ item.name }}"
+          description: "{{ item.description }}"
+          state: present
+  loop: "{{ security_groups }}"
+
+- name: Create a list of security groups
+  set_fact:
+          sg_name: "{{ sg_name|default([]) + [ item.name ] }}"
+  loop: "{{ security_groups }}"
+
+  #- debug:
+  #      msg: "Security group(s) {{ sg_name }} created."
+  #when: item.name is defined
+
+#Create Security Group Rules:
+- name: Create security group rules
+  os_security_group_rule:
+          security_group: "{{ item.name }}"
+          protocol: "{{ item.protocol }}"
+          port_range_min: "{{ item.port_range_min }}"
+          port_range_max: "{{ item.port_range_max }}"
+          remote_ip_prefix: "{{ item.remote_ip_prefix }}"
+          state: present
+  loop: "{{ security_groups }}"

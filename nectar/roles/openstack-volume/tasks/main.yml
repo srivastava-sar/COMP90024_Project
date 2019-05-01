@@ -1,0 +1,51 @@
+#Create volume from vars
+- name: Create volume1 on NeCTAR
+  os_volume:
+          display_name: "{{ volume_name1 }}"
+          size: "{{ volume_size1 }}"
+          availability_zone: "{{ availability_zone }}"
+          wait: yes
+          timeout: 600
+          state: present
+  register: os_vol1
+
+- name: Create volume2 on NeCTAR
+  os_volume:
+          display_name: "{{ volume_name2 }}"
+          size: "{{ volume_size1 }}"
+          availability_zone: "{{ availability_zone }}"
+          wait: yes
+          timeout: 600
+          state: present
+  register: os_vol2
+
+- name: Create volume3 on NeCTAR
+  os_volume:
+        display_name: "{{ volume_name3 }}"
+        size: "{{ volume_size1 }}"
+        availability_zone: "{{ availability_zone }}"
+        wait: yes
+        timeout: 600
+        state: present
+  register: os_vol3  
+
+- name: Create volume4 on NeCTAR
+  os_volume:
+          display_name: "{{ volume_name4 }}"
+          size: "{{ volume_size2 }}"
+          availability_zone: "{{ availability_zone }}"
+          wait: yes
+          timeout: 600
+          state: present
+  register: os_vol4
+
+#Get a list of all volume Ids
+- name: Get volume Ids
+  set_fact:
+          os_vol_id1: "{{ os_vol_id1|default([]) + [ os_vol1.id ] }}"
+          os_vol_id2: "{{ os_vol_id2|default([]) + [ os_vol2.id ] }}"
+          os_vol_id3: "{{ os_vol_id3|default([]) + [ os_vol3.id ] }}"
+          os_vol_id4: "{{ os_vol_id4|default([]) + [ os_vol4.id ] }}"
+
+- debug:
+        msg: "Volume {{ os_vol_id1 }}, {{ os_vol_id2 }}, {{ os_vol_id3 }}, {{ os_vol_id4 }}, created."
