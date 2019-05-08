@@ -1,4 +1,3 @@
-# code contributor Advait Deshpande
 import tweepy as tw
 from tweepy import OAuthHandler
 import json
@@ -8,15 +7,16 @@ from nltk.corpus import wordnet as wn
 
 from tweepy.streaming import StreamListener
 from tweepy import Stream
+from apscheduler.schedulers.blocking import BlockingScheduler
 
 
 import time
 import couchdb as cb
 
-API_KEY = "e0FF02OSMnexeYt9VlDg"
-API_SECRET_KEY = "DPHdMiCwV8KSW6DGVawxRfdCYBY9DP3Av8wjXPz1aU"
-ACCESS_TOKEN = "41409872-7IOHMy8v1sNpaZ5GCdcWksVOEyB6KYWCnmybx9Qam"
-ACCESS_TOKEN_SECRET = "DkpKAFH297M6DqMK1q66Ckg7QPsMDzjddhdYQon1w"
+API_KEY = ""
+API_SECRET_KEY = ""
+ACCESS_TOKEN = ""
+ACCESS_TOKEN_SECRET = ""
 
 SEARCH_TOPIC = ["gym","workout","cycling","yoga", "fitness"]
 POS_SENTIMENT = 1
@@ -26,10 +26,16 @@ SERVER_2 = "localhost"
 SERVER_3 = "localhost"
 SERVER_4 = "localhost"
 
-SERVER_1 = "103.6.254.12"
-#SERVER_2 = "103.6.254.60"
-SERVER_3 = "103.6.254.69"
-SERVER_4 = "103.6.254.21"
+SERVER_1 = "103.6.254.21"
+SERVER_2 = "103.6.254.69"
+SERVER_3 = "103.6.254.60"
+SERVER_4 = "103.6.254.12"
+
+UserDb_Design = 'userId'
+UserDb_View = 'userId-view'
+
+db = None
+dbUser = None
 
 # APP_KEY = "67ce4LIyBK4hQJH2VzZWhXsFH"
 # API_SECRET_KEY = "K7bhIwTC6KPzuVjFMsaEADR3fvvOHZt2oEVOm1yqYnte0D0Rxj"
@@ -62,9 +68,6 @@ def storeInUserDb(document):
     id = str(document['value']['userId'])
     if id not in dbUser:
         dbUser[id] = userDoc
-    
-    
-    
 
 def storeInDb(dbase, idDoc, docu):
     if idDoc not in dbase:
@@ -90,6 +93,18 @@ def isEligible(texts):
             return True
     return False
 
+def getPlace(data):
+    result = None
+    if data:
+        result = data['name']
+    return result
+
+def getPlaceType(data):
+    result = None
+    if data:
+        result = data['place_type']
+    return result
+
 
 def putJsonInDb(jdata):
     demoDoc = {"type": "twitter_data", "value": {}}
@@ -99,19 +114,21 @@ def putJsonInDb(jdata):
     demoDoc['value']['userId'] = jdata['user']['id']
     demoDoc['value']['created_at'] = jdata['created_at']
     #demoDoc['value']['timestamp_ms'] = jdata['timestamp_ms']
-    demoDoc['value']['location'] = jdata['user']['location']
+    demoDoc['value']['place'] = getPlace(jdata['place'])
+    demoDoc['value']['placeType'] = getPlaceType(jdata['place'])
     demoDoc['value']['coordinates'] = jdata['coordinates']
     if 'text' in jdata:
         demoDoc['value']['text'] = jdata['text']
     elif 'full_text' in jdata:
         demoDoc['value']['text'] = jdata['full_text']
     else:
-        raise   
+        raise
     demoDoc['value']['sentiment'] = str(getSentiment(demoDoc['value']['text']))
 
     if isEligible(demoDoc['value']['text']):
-        return storeInDb(db, idDoc, demoDoc)
+        return storeInDb(db,idDoc, demoDoc)
     return False
+
 
 
 def getSynonyms(topics):
@@ -131,9 +148,8 @@ def getSynonyms(topics):
 
 
 
-def harvestTwBySearch(db,api,SEARCH_TOPIC):
+def harvestTwBySearch(api,SEARCH_TOPIC):
     SEARCH_QUERY_STRING = "place:3f14ce28dc7c4566 "+ getSynonyms(SEARCH_TOPIC) + " -filter:retweets"
-    #SEARCH_QUERY_STRING = "place:3f14ce28dc7c4566 gym OR exercise OR exercising OR physical_exercise OR physical_exertion OR workout OR training OR run OR foot_race OR running OR running_play OR running_game OR fit OR yoga -filter:retweets"
     print("Search for str = " + str(SEARCH_QUERY_STRING))
     maxTweets = 10
     count = 0
@@ -141,19 +157,22 @@ def harvestTwBySearch(db,api,SEARCH_TOPIC):
     for tweet in tw.Cursor(api.search, q=SEARCH_QUERY_STRING,tweet_mode='extended').items(maxTweets):
         if putJsonInDb(tweet._json):
             count +=1
-    print("Done: Twitts added: " + str(count))
+    print("Done: Tweets added: " + str(count))
 
-def harvestTwByStream():
+def harvestTwByStream(auth):
     l = StdOutListener()
     stream = Stream(auth, l)
     #stream.filter(locations=[144.9623,-37.8124,144.9645,-37.7438]) #only melbourne
-    stream.filter(locations=[96.8168,-43.7405,159.1092,-9.142]) #entire australia and tasmania from AURIN
+    stream.filter(locations=[96.8168,-43.7405,159.1092,-9.142], is_async=True) #entire australia and tasmania from AURIN
+    time.sleep(2)
+    stream.disconnect()
+    print("Stream closed gracefully")
     
-def harvestTwByUser():
+def harvestTwByUser(api):
     #http://localhost:5984/_utils/#/database/tweets_v2/_design/view_userId/_view/new-view
     #http://localhost:5984/_utils/#database/tweets_v4_user/_design/userid/_view/userid-view
 
-    for row in dbUser.view('userid/userid-view'):
+    for row in dbUser.view(UserDb_Design+'/'+UserDb_View):
         count2 = 0
         userDoc = dbUser[row['id']]
         if userDoc['status'] == 0:
@@ -165,32 +184,40 @@ def harvestTwByUser():
                     count2 +=1    
             print(userDoc['username'] + " -> " + str(count2))
 
+def harvestor():
+    server = SERVER_4
+    couch = cb.Server("http://admin:admin@103.6.254.12:5984/")
+    dbname = "tweets_prod_v1"
+    dbUserName = dbname+"_user"
+    global db
+    global dbUser
 
-if __name__ == '__main__':
-    server = SERVER_2
-    couch = cb.Server("http://admin:admin@"+server+":5984/")
-    dbname = "tweets_v5"
-    dbUser = dbname+"_user"
-
-    if dbUser in couch:
-        dbUser = couch[dbUser]
+    if dbUserName in couch:
+        dbUser = couch[dbUserName]
     else:
-        dbUser = couch.create(dbUser)
+        dbUser = couch.create(dbUserName)
 
     if dbname in couch:
         db = couch[dbname]
     else:
-        db = couch.create(dbname)    
-        
+        db = couch.create(dbname)
+
     auth = OAuthHandler(API_KEY, API_SECRET_KEY)
     auth.set_access_token(ACCESS_TOKEN, ACCESS_TOKEN_SECRET)
     api = tw.API(auth)
     if server == SERVER_1:
-        harvestTwBySearch(db,api,SEARCH_TOPIC)
+        harvestTwBySearch(api,SEARCH_TOPIC)
     elif server == SERVER_2:
-        harvestTwByStream()
-    elif server == SERVER_3:
-        harvestTwByUser()
+        harvestTwByStream(auth)
+    elif server == SERVER_4:
+        harvestTwByUser(api)
 
+
+if __name__ == '__main__':
+    scheduler = BlockingScheduler()
+    scheduler.add_job(harvestor, 'interval', minutes=1)
     
-
+    try:
+        scheduler.start()
+    except (KeyboardInterrupt, SystemExit):
+        pass
