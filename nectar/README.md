@@ -5,4 +5,4 @@ To set up the cluster and install CouchDB, do the following:
 
 References: 
 Most of the ansible code (used in nectar.yml) has been sourced from the commands that were shown in lecture 5
-Code to install for CouchDB (used in the last part of nectar-2.yml) has been sourced from https://github.com/glynnbird/ansible-install-couchdb
+Code to install for CouchDB (used in the last part of nectar-2.yml) has been sourced from https://github.com/glynnbird/ansible-install-couchdb and https://github.com/kafecho/ansible-couchdb2

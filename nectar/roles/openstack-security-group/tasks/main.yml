@@ -16,12 +16,48 @@
   #when: item.name is defined
 
 #Create Security Group Rules:
-- name: Create security group rules
+- name: Create security group rule for TCP
   os_security_group_rule:
           security_group: "{{ item.name }}"
-          protocol: "{{ item.protocol }}"
-          port_range_min: "{{ item.port_range_min }}"
-          port_range_max: "{{ item.port_range_max }}"
+          protocol: "tcp"
+          #remote_ip_prefix: "{{ item.remote_ip_prefix }}"
+          state: present
+          remote_group: "{{ item.name }}"
+  loop: "{{ security_groups }}"
+- name: Create IP rule for TCP
+  os_security_group_rule:
+          security_group: "{{ item.name }}"
+          protocol: "tcp"
           remote_ip_prefix: "{{ item.remote_ip_prefix }}"
           state: present
+  loop: "{{ security_groups }}"
+- name: Create IP rule for UDP
+  os_security_group_rule:
+          security_group: "{{ item.name }}"
+          protocol: "udp"
+          remote_ip_prefix: "{{ item.remote_ip_prefix }}"
+          state: present
+  loop: "{{ security_groups }}"
+- name: Create security group rule for UDP
+  os_security_group_rule:
+          security_group: "{{ item.name }}"
+          protocol: "udp"
+          state: present
+          remote_group: "{{ item.name }}"
+  loop: "{{ security_groups }}"
+
+- name: Create IP rule for ICMP
+  os_security_group_rule:
+          security_group: "{{ item.name }}"
+          protocol: "icmp"
+          remote_ip_prefix: "{{ item.remote_ip_prefix }}"
+          state: present
+  loop: "{{ security_groups }}"
+
+- name: Create security group rule for ICMP
+  os_security_group_rule:
+          security_group: "{{ item.name }}"
+          protocol: "icmp"
+          state: present
+          remote_group: "{{ item.name }}"
   loop: "{{ security_groups }}"

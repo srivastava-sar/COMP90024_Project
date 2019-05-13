@@ -1,89 +1,9 @@
-- hosts: all
-  tasks:
-        - name: Add server Configuration in instance
-          become: yes
-          lineinfile:
-                  path: /etc/environment
-                  line: "http_proxy=\"http://wwwproxy.unimelb.edu.au:8000\"\nhttps_proxy=\"http://wwwproxy.unimelb.edu.au:8000\"\nftp_proxy=\"http://wwwproxy.unimelb.edu.au:8000\""
-                  state: present
-        - name: Install git
-          become: yes
-          apt:
-                  name: ['git']
-                  update_cache: yes
-                  state: latest
-        - name: Install apache2
-          become: yes
-          apt:
-                  name: ['apache2']
-                  update_cache: yes
-                  state: latest
-  roles:
-        - role: openstack-common
-
-- hosts: all
+- hosts: server2
+  gather_facts: true
   vars:
-        couchdb_version: 2.3.0
-        couchdb_install_dir: /etc/couchdb
-
-  tasks:
-        - name: Install erlang
-          apt:
-                  name: ['erlang']
-                  state: latest
-                  update_cache: yes
-          become: yes
-        - name: install nodejs
-          become: yes
-          apt:
-                  name: ['nodejs']
-                  state: latest
-                  update_cache: yes
-
-        - name: install npm
-          become: yes
-          apt:
-                  name: ['npm']
-                  state: latest
-                  update_cache: yes
-        - name: install rebar
-          become: yes
-          apt:
-                  name: ['rebar']
-                  state: latest
-                  update_cache: yes
-        
-        - name: download couchdb from git
-          become: yes
-          git:
-                  repo: "https://git-wip-us.apache.org/repos/asf/couchdb.git"
-                  dest: "{{ couchdb_install_dir }}"
-                  accept_hostkey: yes
-                  version: "{{ couchdb_version }}"
-
-        - name: Install grunt globally
-          npm: "name=grunt-cli global=yes"
-          become: yes
-
-        - name: run configure
-          become: yes
-          shell: "./configure chdir={{ couchdb_install_dir }}"
-
-        - name: run make clean
-          become: yes
-          shell: "make clean chdir={{ couchdb_install_dir }}"
-
-        - name: tee to /etc/apt/sources.list
-          become: yes
-          shell: "echo \"deb https://apache.bintray.com/couchdb-deb bionic main\" | sudo tee -a /etc/apt/sources.list"
-
-        - name: add key
-          become: yes
-          shell: "curl -L https://couchdb.apache.org/repo/bintray-pubkey.asc | sudo apt-key add -"
-
-        - name: install couchdb
-          become: yes
-          apt:
-                  name: ['couchdb']
-                  update_cache: yes
-                  state: latest  
+          host_IP: "{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}"
+          host_name: "{{ ansible_hostname }}"
+          couchdb_version: 2.3.0
+          couchdb_install_dir: /etc/couchdb
+  roles:
+          - role: openstack-common
