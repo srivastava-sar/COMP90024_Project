@@ -214,7 +214,7 @@ def harvestTwByUser(api):
 def harvestor():
     server = getServer()
     couch = cb.Server("http://admin:admin@localhost:5984/")
-    dbname = "tweets_prod"
+    dbname = "tweets_prod_v3"
     dbUserName = dbname+"_user"
     global db
     global dbUser
