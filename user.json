@@ -1,0 +1,10 @@
+{
+  "_id": "_design/userId",
+  "_rev": "4-c0f73a596fcdbd5f0099e00660b67d59",
+  "views": {
+    "userId-view": {
+      "map": "function (doc) {\n  emit(doc.username, doc.status);\n}"
+    }
+  },
+  "language": "javascript"
+}
