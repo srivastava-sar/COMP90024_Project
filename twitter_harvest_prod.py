@@ -66,7 +66,7 @@ def storeInUserDb(document):
 
 def storeInDb(dbase, idDoc, docu):
     if idDoc not in dbase:
-        if docu['value']['place'] is not None:
+        if docu['value']['place']:
             geolocator = Nominatim(user_agent="Twitter",timeout=3)
             try:
                 location = geolocator.geocode(docu['value']['place'])
