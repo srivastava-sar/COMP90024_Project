@@ -28,22 +28,22 @@ Not_smokers_std = (Not_smokers-mean(Not_smokers))/sd(Not_smokers)
 Not_smokers = Not_smokers/100
 
 ##QQ-Plots for the above metrics
-jpeg("QQ-Plot_Not_Obese.jpeg", width = 350, height = 350)
+jpeg("QQ-Plot_Not_Obese.jpeg", width = 550, height = 550)
 qqnorm(Not_obese, main = "Normal QQ-Plot for % of population that is not obese")
 qqline(Not_obese)
 dev.off()
 
-jpeg("QQ-Plot_Not_Overweight.jpeg", width = 350, height = 350)
+jpeg("QQ-Plot_Not_Overweight.jpeg", width = 550, height = 550)
 qqnorm(Not_overweight, main = "Normal QQ-Plot for % of population that is not obese")
 qqline(Not_overweight)
 dev.off()
 
-jpeg("QQ-Plot_Physically_Active.jpeg", width = 350, height = 350)
+jpeg("QQ-Plot_Physically_Active.jpeg", width = 550, height = 550)
 qqnorm(Physically_active, main = "Normal QQ-Plot for % of population that is not obese")
 qqline(Physically_active)
 dev.off()
 
-jpeg("QQ-Plot_Not_Smoker.jpeg", width = 350, height = 350)
+jpeg("QQ-Plot_Not_Smoker.jpeg", width = 550, height = 550)
 qqnorm(Not_smokers, main = "Normal QQ-Plot for % of population that is not obese")
 qqline(Not_smokers)
 dev.off()
