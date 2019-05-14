@@ -1,0 +1,22 @@
+{
+  "id": "_design/location_v1",
+  "key": "_design/location_v1",
+  "value": {
+    "rev": "51-f3935303cdd0052d81608cf1264a322a"
+  },
+  "doc": {
+    "_id": "_design/location_v1",
+    "_rev": "51-f3935303cdd0052d81608cf1264a322a",
+    "views": {
+      "new-view": {
+        "map": "function (doc) {\n  if (doc.value.latitude) {\n    var AUS_LAT_MIN = parseFloat(-43.7405);\n    var AUS_LON_MIN = parseFloat(96.8168);\n    var AUS_LAT_MAX = parseFloat(-9.142);\n    var AUS_LON_MAX = parseFloat(159.1092);\n    var latitude = parseFloat(doc.value.latitude);\n    var longitude = parseFloat(doc.value.longitude);\n    if (latitude >= AUS_LAT_MIN && latitude <= AUS_LAT_MAX && longitude >= AUS_LON_MIN && longitude <= AUS_LON_MAX)\n      emit([doc.value.place,doc.value.latitude,doc.value.longitude,doc.value.sentiment],1); \n  }\n}",
+        "reduce": "function (keys, values, rereduce) {\n  if (rereduce) {\n    var result = 0;\n    for (var i = 0; i < values.length; i++) {\n      result += values[i];\n    }\n    if (result > 30)\n      return result;\n  } else {\n       return values.length;\n   }\n}"
+      },
+      "newplace": {
+        "map": "function (doc) {\n  if (doc.value.latitude) {\n    var AUS_LAT_MIN = parseFloat(-43.7405);\n    var AUS_LON_MIN = parseFloat(96.8168);\n    var AUS_LAT_MAX = parseFloat(-9.142);\n    var AUS_LON_MAX = parseFloat(159.1092);\n    var latitude = parseFloat(doc.value.latitude);\n    var longitude = parseFloat(doc.value.longitude);\n    if (latitude >= AUS_LAT_MIN && latitude <= AUS_LAT_MAX && longitude >= AUS_LON_MIN && longitude <= AUS_LON_MAX)\n      emit([doc.value.latitude,doc.value.longitude,doc.value.sentiment],1); \n  }\n}",
+        "reduce": "function (keys, values, rereduce) {\n  if (rereduce) {\n    var result = 0;\n    for (var i = 0; i < values.length; i++) {\n      result += values[i];\n    }\n    if (result > 50)\n      return result;\n  } else {\n       return values.length;\n   }\n}"
+      }
+    },
+    "language": "javascript"
+  }
+}

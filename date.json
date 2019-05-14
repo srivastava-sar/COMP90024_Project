@@ -1,0 +1,10 @@
+{
+  "_id": "_design/date",
+  "_rev": "5-807deb322196e299cfb86d76366bc4e0",
+  "views": {
+    "date-view": {
+      "map": "function (doc) {\n  var someDate = new Date(doc.value.created_at);\n  dateT = someDate.getTime();\n  emit(dateT, doc.value.text);\n}"
+    }
+  },
+  "language": "javascript"
+}
