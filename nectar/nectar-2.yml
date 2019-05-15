@@ -1,9 +1,0 @@
-- hosts: server2
-  gather_facts: true
-  vars:
-          host_IP: "{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}"
-          host_name: "{{ ansible_hostname }}"
-          couchdb_version: 2.3.0
-          couchdb_install_dir: /etc/couchdb
-  roles:
-          - role: openstack-common
