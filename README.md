@@ -16,3 +16,12 @@ For nectar setup, please refer to README.md in nectar folder
 To start harvesting tweets from different nectar instances, run the following command after ansible script successful execution:
 
 $ python twitter_harvest_prod.py
+
+
+Files included:
+1. analysis.R : creates charts of the analysis of twitter data
+2. data/location/user.json : Map-reduce view files
+3. nectar: nectar instances installation and setup folder
+4. twitter_analysis.py : extracting twitter analytics
+5. twitter_harvestor_prod.py : main harvesting file
+6. UI_prod: UI framework
