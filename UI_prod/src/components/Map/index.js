@@ -1,3 +1,5 @@
+/*#Team 46: (Advait Mangesh Deshpande (1005024), Ansh Juneja (1027339), Saransh Srivastava (1031073), Siyu Biyan (984002), Waqar Ul Islam (1065823));
+#Cities Analysed: Adelaide, Brisbane, Canberra, Geelong, Gold Coast, Melbourne, Newcastle, Perth, Sydney, Townsville*/
 import React from 'react';
 import GoogleMapReact from 'google-map-react';
 import supercluster from 'points-cluster';
@@ -5,7 +7,6 @@ import Marker from '../Marker';
 import $ from 'jquery';
 import AnalysisContainer from '../Analysis';
 import AnalysisDataContainer from '../AnalysisDataContainer/index';
-import ScatterDataComponent from '../ScatterDataComponent/index'
 
 const australiaCoords = { lat: -26.4390917, lng: 133.281323 }
 
