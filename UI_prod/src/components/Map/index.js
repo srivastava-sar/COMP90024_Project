@@ -41,17 +41,14 @@ export class GoogleMap extends React.PureComponent {
 
   };
 
-  getClusters = () => {
-    const clusters = supercluster(this.state.latLngsArrayData, {
+  getAllClusterMarkers = () => {
+    const clustersMarkers = supercluster(this.state.latLngsArrayData, {
       minZoom: 0,
       maxZoom: 9
     });
 
-    return clusters(this.state.mapOptions);
+    return clustersMarkers(this.state.mapOptions);
   };
-  componentDidUpdate(prevProp, prevState) {
-    console.log(prevProp, prevState);
-  }
 
   onMarkerClick = (id, lat, lng, city, sentimentValue, sentiment) => {
     const allData = this.state.latLngsArrayData;
@@ -221,7 +218,7 @@ export class GoogleMap extends React.PureComponent {
         }
 
         this.setState({ latLngsArrayData: adata, dataLoaded: true });
-        this.createClusters(this.props);
+        this.createMarkerCluster(this.props);
       }
     }).catch(err => {
       alert('Something went wrong, Please try again');
@@ -230,12 +227,12 @@ export class GoogleMap extends React.PureComponent {
 
   }
 
-  createClusters = props => {
+  createMarkerCluster = props => {
     this.setState({
       clusters: this.state.mapOptions.bounds
-        ? this.getClusters(props).map(({ wx, wy, numPoints, points }) => ({
-          lat: wy,
-          lng: wx,
+        ? this.getAllClusterMarkers(props).map(({ lng, lat, numPoints, points }) => ({
+          lat: lat,
+          lng: lng,
           numPoints,
           id: `${numPoints}_${points[0].id}`,
           points,
@@ -254,7 +251,7 @@ export class GoogleMap extends React.PureComponent {
         },
       },
       () => {
-        this.createClusters(this.props);
+        this.createMarkerCluster(this.props);
       }
     );
   };
@@ -286,7 +283,6 @@ export class GoogleMap extends React.PureComponent {
                 bootstrapURLKeys={{ key: 'AIzaSyBZHgvSAwAB3OmZ-GRX115M90gp81nQ-Ks' }}
               >
                 {this.state.dataLoaded && this.state.clusters.map(item => {
-                  // if (item.numPoints === 1) {
                   return (
                     <Marker
                       key={item.id}
