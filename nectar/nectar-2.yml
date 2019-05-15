@@ -1,0 +1,105 @@
+#Team 46: (Advait Mangesh Deshpande (1005024), Ansh Juneja (1027339), Saransh Srivastava (1031073), Siyu Biyan (984002), Waqar Ul Islam (1065823));
+##Cities Analysed: Adelaide, Brisbane, Canberra, Geelong, Gold Coast, Melbourne, Newcastle, Perth, Sydney, Townsville
+#Format the instances to include all the libraries
+- hosts: all
+  gather_facts: true
+  vars:
+          host_IP: "{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}"
+          host_name: "{{ ansible_hostname }}"
+  roles:
+          - role: openstack-common
+
+#Install couchdb
+- hosts: servers134
+  gather_facts: true 
+  vars:
+          host_IP: "{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}"
+          host_name: "{{ ansible_hostname }}"
+          couchdb_version: 2.3.0
+          couchdb_install_dir: /etc/couchdb
+  roles:
+          - role: openstack-couchdb
+
+#Add nodes and finish the cluster. Only run it on the head node
+- hosts: servers134[0]
+  gather_facts: true
+  vars:
+          host_IP: "{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}"
+          host_name: "{{ ansible_hostname }}"
+          server1IP: "{{ groups.servers134[0] }}"
+  tasks:
+	- name: Add instances to the cluster
+          become: yes
+          shell: "curl -X PUT \"http://{{ server1IP | regex_replace('ubuntu@') }}:5984/_nodes/couchdb@{{ item | regex_replace('ubuntu@') }}\" -d {} --user admin:admin"
+          loop: "{{ groups.servers134 }}"
+
+        - name: Finish the cluster
+          uri:
+                  status_code: 201
+                  HEADER_Content-Type: "application/json"
+                  user: "admin"
+                  password: "admin"
+                  method: POST
+                  force_basic_auth: yes
+                  url: "http://127.0.0.1:5984/_cluster_setup"
+                  body_format: json
+                  body: "{\"action\":\"finish_cluster\"}"
+                  timeout: 600
+
+#Run R script for analysis and the create the UI on server2
+#The UI is being run on the IP of server2 on port 5000 by default
+- hosts: server2
+  gather_facts: yes
+  tasks:
+          - name: Add GPG key (R)
+            become: yes
+            apt_key:
+                    keyserver: "keyserver.ubuntu.com"
+                    id: "E298A3A825C0D65DFD57CBB651716619E084DAB9"
+          - name: Add the R Repository
+            become: yes
+            apt_repository:
+                    repo: "deb https://cloud.r-project.org/bin/linux/ubuntu bionic-cran35/"
+                    state: present
+          - name: Install R, Build Essentials
+            become: yes
+            apt:
+                    name: ['r-base', 'build-essential']
+                    update_cache: yes
+                    state: latest
+          - name: Install packages
+            become: yes
+            command: /usr/bin/Rscript --slave --no-save --no-restore-history -e "if (! ('{{item}}' %in% installed.packages()[,'Package'])) install.packages(pkgs={{item}}, repos=c('https://cloud.r-project.org/src/contrib/'))"
+            with_items:
+                    - rjson
+                    - utils
+                    - scales
+
+          - name: Copy R and Python Script, aurin json file
+            become: yes
+            copy:
+                    src: "~/COMP90024_Project/{{ item }}"
+                    dest: "{{ item }}"
+            with_items:
+                    - "analysis.R"
+                    - "Output.json"
+                    - "twitter_analysis.py"
+          - name: Run Python script
+            become: yes
+            command: "python twitter_analysis.py"
+
+          - name: Run R script
+            become: yes
+            command: "Rscript analysis.R"
+          
+          - name: npm install all packges
+            become: yes
+            shell: "npm install"
+
+          - name: npm run build
+            become: yes
+            shell: "npm run build"
+
+          - name: serve build
+            become: yes
+            shell: "serve -s build/"

@@ -1,0 +1,88 @@
+#Team 46: (Advait Mangesh Deshpande (1005024), Ansh Juneja (1027339), Saransh Srivastava (1031073), Siyu Biyan (984002), Waqar Ul Islam (1065823));
+##Cities Analysed: Adelaide, Brisbane, Canberra, Geelong, Gold Coast, Melbourne, Newcastle, Perth, Sydney, Townsville
+- name: download couchdb from git
+  become: yes
+  git:
+          repo: "https://git-wip-us.apache.org/repos/asf/couchdb.git"
+          dest: "{{ couchdb_install_dir }}"
+          accept_hostkey: yes
+          version: "{{ couchdb_version }}"
+
+- name: Install grunt globally
+  npm: "name=grunt-cli global=yes"
+  become: yes
+
+- name: Run configure
+  become: yes
+  shell: "./configure chdir={{ couchdb_install_dir }}"
+
+- name: Run make clean
+  become: yes
+  shell: "make clean chdir={{ couchdb_install_dir }}"
+
+- name: Tee to /etc/apt/sources.list
+  become: yes
+  shell: "echo \"deb https://apache.bintray.com/couchdb-deb bionic main\" | sudo tee -a /etc/apt/sources.list"
+
+- name: Add couch key
+  become: yes
+  shell: "curl -L https://couchdb.apache.org/repo/bintray-pubkey.asc | sudo apt-key add -"
+
+- name: Install couchdb
+  become: yes
+  apt:
+          name: ['couchdb']
+          update_cache: yes
+          state: latest
+
+- name: Install the sysv script to run CouchDB as a service
+  copy:
+          src: "etc_files/couchdb"
+          dest: "/etc/init.d/couchdb"
+          mode: "0755"
+
+- name: Start CouchDB and enable it at boot time
+  service:
+          name: "couchdb"
+          state: started
+          enabled: yes
+
+- name: Update vm.args file
+  become: yes
+  template:
+          src: "vm.args.j2"
+          dest: "/opt/couchdb/etc/vm.args"
+
+- name: Update the .ini files
+  become: yes
+  copy:
+          src: "~/COMP90024_Project/nectar/etc_files/{{ item }}"
+          dest: "/opt/couchdb/etc/{{ item }}"
+  with_items:
+          - "local.ini"
+          - "local.d/10-admins.ini"
+
+- name: Update local.ini on all servers except server1
+  become: yes
+  lineinfile:
+          path: "/opt/couchdb/etc/local.ini"
+          regexp: "^[chttpd]\nport = 5984\nbind_address = 0.0.0.0"
+          line: "[chttpd]"
+
+- name: update local.d/10-admins.ini
+  become: yes
+  lineinfile:
+          path: "/opt/couchdb/etc/local.d/10-admins.ini"
+          regexp: "^[chttpd]\nbind_address = 0.0.0.0"
+          line: "[chttpd]"
+
+- name: Enable the cluster
+  uri:
+          status_code: 201
+          HEADER_Content-Type: "application/json"
+          user: "admin"
+          password: "admin"
+          method: POST
+          body_format: json
+          url: "http://127.0.0.1:5984/_cluster_setup"
+          body: "{\"action\":\"enable_cluster\",\"bind_address\":\"0.0.0.0\",\"username\":\"admin\",\"password\":\"admin\",\"node_count\":\"3\"}"

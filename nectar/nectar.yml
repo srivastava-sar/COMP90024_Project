@@ -1,0 +1,17 @@
+#Team 46: (Advait Mangesh Deshpande (1005024), Ansh Juneja (1027339), Saransh Srivastava (1031073), Siyu Biyan (984002), Waqar Ul Islam (1065823));
+##Cities Analysed: Adelaide, Brisbane, Canberra, Geelong, Gold Coast, Melbourne, Newcastle, Perth, Sydney, Townsville
+- hosts: localhost
+  vars_files:
+          - host_vars/nectar.yml
+  gather_facts: true
+  roles:
+          - role: openstack-volume
+          - role: openstack-security-group
+          - role: openstack-instance
+ tasks:
+          - name: Update host file
+            become: yes
+            lineinfile:
+                    path: /etc/ansible/hosts
+                    line: "[servers134]\nubuntu@{{ os_instance1.openstack.public_v4  }}\nubuntu@{{ os_instance3.openstack.public_v4  }}\nubuntu@{{ os_instance4.openstack.public_v4  }}\n[server2]\nubuntu@{{ os_instance2.openstack.public_v4  }}\n"
+                   state: present

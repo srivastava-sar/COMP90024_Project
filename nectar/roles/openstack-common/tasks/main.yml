@@ -1,0 +1,46 @@
+#Team 46: (Advait Mangesh Deshpande (1005024), Ansh Juneja (1027339), Saransh Srivastava (1031073), Siyu Biyan (984002), Waqar Ul Islam (1065823));
+##Cities Analysed: Adelaide, Brisbane, Canberra, Geelong, Gold Coast, Melbourne, Newcastle, Perth, Sydney, Townsville
+#Install dependencies on the host
+- name: Install apt packages
+  become: yes
+  apt:
+          name: ['python-pip', 'git', 'apache2', 're', 'erlang', 'nodejs', 'rebar']
+          state: latest
+          update_cache: yes
+  #when: ansible_distribution == "Ubuntu"
+#sudo apt-get update; sudo apt-get update python-pip
+
+- name: Install pip packages
+  become: yes
+  pip:
+          name: ['pip', 'openstacksdk', 'tweepy', 'nltk', 'screen', 'apscheduler', 'geopy', 'textblob']
+          state: latest
+
+- name: Set authorized key on instances
+  authorized_key:
+          user: ubuntu
+          state: present
+          key: "{{ lookup('file', item) }}"
+  with_fileglob: "~/.ssh/id_rsa.pub'"
+
+- name: Add server Configuration in instance
+  become: yes
+  lineinfile:
+          path: /etc/environment
+          state: present
+          line: "http_proxy=\"http://wwwproxy.unimelb.edu.au:8000\"\nhttps_proxy=\"http://wwwproxy.unimelb.edu.au:8000\"\nftp_proxy=\"http://wwwproxy.unimelb.edu.au:8000\"\nno_proxy=localhost,127.0.0.1,127.0.1.1,ubuntu,{{ host_name }}.novalocal,{{ host_name }},{{ host_IP }}"
+
+- name: Update node repository
+  become: yes
+  shell: "curl -L https://deb.nodesource.com/setup_10.x | sudo -E bash -"
+
+- name: Update node
+  become: yes
+  apt:
+          name: ['nodejs']
+          state: latest
+          update_cache: yes
+
+- name: Update npm
+  become: yes
+  npm: "name=npm@latest global=yes"
